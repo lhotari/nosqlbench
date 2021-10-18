@@ -47,20 +47,21 @@ class ReceivedMessageSequenceTracker implements AutoCloseable{
             return;
         }
 
+        boolean messagesSkipped = false;
         if (sequenceNumber > expectedNumber) {
             if (pendingOutOfSeqNumbers.size() == MAX_TRACK_OUT_OF_ORDER_SEQUENCE_NUMBERS) {
-                processEarliestPendingOutOfSequenceNumber();
+                messagesSkipped = processEarliestPendingOutOfSequenceNumber();
             }
             pendingOutOfSeqNumbers.add(sequenceNumber);
         } else {
             // sequenceNumber == expectedNumber
             expectedNumber++;
         }
-        processPendingOutOfSequenceNumbers();
+        processPendingOutOfSequenceNumbers(messagesSkipped);
         cleanUpTooFarBehindOutOfSequenceNumbers();
     }
 
-    private void processEarliestPendingOutOfSequenceNumber() {
+    private boolean processEarliestPendingOutOfSequenceNumber() {
         // remove the earliest pending out of sequence number
         Long earliestOutOfSeqNumber = pendingOutOfSeqNumbers.first();
         pendingOutOfSeqNumbers.remove(earliestOutOfSeqNumber);
@@ -69,16 +70,20 @@ class ReceivedMessageSequenceTracker implements AutoCloseable{
             // increment the counter with the amount of sequence numbers that got skipped
             msgErrLossCounter.inc(earliestOutOfSeqNumber - expectedNumber);
             expectedNumber = earliestOutOfSeqNumber + 1;
+            return true;
         } else {
             msgErrLossCounter.inc();
         }
+        return false;
     }
 
-    private void processPendingOutOfSequenceNumbers() {
+    private void processPendingOutOfSequenceNumbers(boolean messagesSkipped) {
         // check if there are previously received out-of-order sequence number that have been received
         while (pendingOutOfSeqNumbers.remove(expectedNumber)) {
             expectedNumber++;
-            msgErrOutOfSeqCounter.inc();
+            if (!messagesSkipped) {
+                msgErrOutOfSeqCounter.inc();
+            }
         }
     }
 
@@ -102,8 +107,7 @@ class ReceivedMessageSequenceTracker implements AutoCloseable{
     @Override
     public void close() {
         while (!pendingOutOfSeqNumbers.isEmpty()) {
-            processEarliestPendingOutOfSequenceNumber();
-            processPendingOutOfSequenceNumbers();
+            processPendingOutOfSequenceNumbers(processEarliestPendingOutOfSequenceNumber());
         }
     }
 }

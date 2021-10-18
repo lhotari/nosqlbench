@@ -28,17 +28,37 @@ class ReceivedMessageSequenceTrackerTest {
 
     @ParameterizedTest
     @ValueSource(longs = {10L, 11L, 19L, 20L, 21L, 100L})
-    void shouldDetectMsgLoss(long totalMessages) {
+    void shouldDetectMsgLossWhenEverySecondMessageIsLost(long totalMessages) {
+        doShouldDetectMsgLoss(totalMessages, 2);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {10L, 11L, 19L, 20L, 21L, 100L})
+    void shouldDetectMsgLossWhenEveryThirdMessageIsLost(long totalMessages) {
+        doShouldDetectMsgLoss(totalMessages, 3);
+    }
+
+    @ParameterizedTest
+    @ValueSource(longs = {20L, 21L, 40L, 41L, 42L, 43L, 100L})
+    void shouldDetectMsgLossWhenEvery21stMessageIsLost(long totalMessages) {
+        doShouldDetectMsgLoss(totalMessages, 21);
+    }
+
+    private void doShouldDetectMsgLoss(long totalMessages, int looseEveryNthMessage) {
         int messagesLost = 0;
         // when
+        boolean lastMessageWasLost = false;
         for (long l = 0; l < totalMessages; l++) {
-            if (l % 2 == 1) {
+            if (l % looseEveryNthMessage == 1) {
                 messagesLost++;
+                lastMessageWasLost = true;
                 continue;
+            } else {
+                lastMessageWasLost = false;
             }
             messageSequenceTracker.sequenceNumberReceived(l);
         }
-        if (totalMessages % 2 == 0) {
+        if (lastMessageWasLost) {
             messageSequenceTracker.sequenceNumberReceived(totalMessages);
         }
         messageSequenceTracker.close();
@@ -111,6 +131,22 @@ class ReceivedMessageSequenceTrackerTest {
         assertEquals(2, msgErrOutOfSeqCounter.getCount());
         assertEquals(0, msgErrDuplicateCounter.getCount());
         assertEquals(0, msgErrLossCounter.getCount());
+    }
+
+    @Test
+    void shouldDetectIndividualMessageLoss() {
+        // when
+        for (long l = 0; l < 100L; l++) {
+            if (l != 11L) {
+                messageSequenceTracker.sequenceNumberReceived(l);
+            }
+        }
+        messageSequenceTracker.close();
+
+        // then
+        assertEquals(0, msgErrOutOfSeqCounter.getCount());
+        assertEquals(0, msgErrDuplicateCounter.getCount());
+        assertEquals(1, msgErrLossCounter.getCount());
     }
 
 }
