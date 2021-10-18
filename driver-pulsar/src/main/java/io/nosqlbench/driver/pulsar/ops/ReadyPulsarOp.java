@@ -412,7 +412,7 @@ public class ReadyPulsarOp implements OpDispenser<PulsarOp> {
         if (StringUtils.isBlank(sequenceErrorSimulatedTypeString)) {
             return Collections.emptySet();
         }
-        return Arrays.stream(StringUtils.split(sequenceErrorSimulatedTypeString))
+        return Arrays.stream(StringUtils.split(sequenceErrorSimulatedTypeString, ','))
             .map(PulsarActivityUtil.SEQ_ERROR_SIMU_TYPE::parseSimuType)
             .filter(Optional::isPresent)
             .map(Optional::get)
