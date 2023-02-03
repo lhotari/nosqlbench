@@ -491,9 +491,10 @@ public class PulsarActivityUtil {
 
     ///////
     // Convert JSON string to a key/value map
-    public static Map<String, String> convertJsonToMap(String jsonStr) throws Exception {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(jsonStr, Map.class);
+    private static final ObjectMapper JACKSON_OBJECT_MAPPER = new ObjectMapper();
+
+    public static Map<String, String> convertJsonToMap(String jsonStr) throws IOException {
+        return JACKSON_OBJECT_MAPPER.readValue(jsonStr, Map.class);
     }
 
     ///////
