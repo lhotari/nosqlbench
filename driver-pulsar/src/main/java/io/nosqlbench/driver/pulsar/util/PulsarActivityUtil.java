@@ -45,10 +45,6 @@ public class PulsarActivityUtil {
     }
 
 
-    public static boolean isValidClientType(String type) {
-        return Arrays.stream(OP_TYPES.values()).anyMatch(t -> t.label.equals(type));
-    }
-
     public static final String MSG_SEQUENCE_NUMBER = "sequence_number";
 
     ///////
@@ -67,9 +63,6 @@ public class PulsarActivityUtil {
         DOC_LEVEL_PARAMS(String label) {
             this.label = label;
         }
-    }
-    public static boolean isValidDocLevelParam(String param) {
-        return Arrays.stream(DOC_LEVEL_PARAMS.values()).anyMatch(t -> t.label.equals(param));
     }
 
     ///////
@@ -104,9 +97,6 @@ public class PulsarActivityUtil {
             this.label = label;
         }
     }
-    public static boolean isValidPersistenceType(String type) {
-        return Arrays.stream(PERSISTENT_TYPES.values()).anyMatch(t -> t.label.equals(type));
-    }
 
     ///////
     // Valid Pulsar client configuration (activity-level settings)
@@ -139,9 +129,6 @@ public class PulsarActivityUtil {
             this.label = label;
         }
     }
-    public static boolean isValidClientConfItem(String item) {
-        return Arrays.stream(CLNT_CONF_KEY.values()).anyMatch(t -> t.label.equals(item));
-    }
 
     ///////
     // Standard producer configuration (activity-level settings)
@@ -166,9 +153,6 @@ public class PulsarActivityUtil {
         PRODUCER_CONF_STD_KEY(String label) {
             this.label = label;
         }
-    }
-    public static boolean isStandardProducerConfItem(String item) {
-        return Arrays.stream(PRODUCER_CONF_STD_KEY.values()).anyMatch(t -> t.label.equals(item));
     }
 
     ///////
@@ -203,9 +187,6 @@ public class PulsarActivityUtil {
             this.label = label;
         }
     }
-    public static boolean isStandardConsumerConfItem(String item) {
-        return Arrays.stream(CONSUMER_CONF_STD_KEY.values()).anyMatch(t -> t.label.equals(item));
-    }
 
     ///////
     // Custom consumer configuration (activity-level settings)
@@ -219,9 +200,6 @@ public class PulsarActivityUtil {
         CONSUMER_CONF_CUSTOM_KEY(String label) {
             this.label = label;
         }
-    }
-    public static boolean isCustomConsumerConfItem(String item) {
-        return Arrays.stream(CONSUMER_CONF_CUSTOM_KEY.values()).anyMatch(t -> t.label.equals(item));
     }
 
     ///////
@@ -265,10 +243,6 @@ public class PulsarActivityUtil {
             this.label = label;
         }
     }
-    public static boolean isStandardReaderConfItem(String item) {
-        return Arrays.stream(READER_CONF_STD_KEY.values()).anyMatch(t -> t.label.equals(item));
-    }
-
     ///////
     // Custom reader configuration (activity-level settings)
     // - NOT part of https://pulsar.apache.org/docs/en/client-libraries-java/#reader
@@ -281,9 +255,6 @@ public class PulsarActivityUtil {
         READER_CONF_CUSTOM_KEY(String label) {
             this.label = label;
         }
-    }
-    public static boolean isCustomReaderConfItem(String item) {
-        return Arrays.stream(READER_CONF_CUSTOM_KEY.values()).anyMatch(t -> t.label.equals(item));
     }
 
     ///////
@@ -332,12 +303,6 @@ public class PulsarActivityUtil {
         public static Optional<SEQ_ERROR_SIMU_TYPE> parseSimuType(String simuTypeString) {
             return Optional.ofNullable(MAPPING.get(simuTypeString.trim()));
         }
-    }
-    public static boolean isValidSeqErrSimuType(String item) {
-        return Arrays.stream(SEQ_ERROR_SIMU_TYPE.values()).anyMatch(t -> t.label.equals(item));
-    }
-    public static String getValidSeqErrSimuTypeList() {
-        return Arrays.stream(SEQ_ERROR_SIMU_TYPE.values()).map(t -> t.label).collect(Collectors.joining(", "));
     }
 
     ///////
