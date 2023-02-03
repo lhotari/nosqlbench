@@ -1,12 +1,29 @@
 package io.nosqlbench.driver.pulsar;
 
+/*
+ * Copyright (c) 2022 nosqlbench
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+
 import com.codahale.metrics.Gauge;
 import com.codahale.metrics.Timer;
 import io.nosqlbench.driver.pulsar.util.PulsarActivityUtil;
 import io.nosqlbench.driver.pulsar.util.PulsarNBClientConf;
 import io.nosqlbench.engine.api.activityimpl.ActivityDef;
 import io.nosqlbench.engine.api.metrics.ActivityMetrics;
-import java.io.IOException;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -73,9 +90,9 @@ public class PulsarSpace {
             CollectionUtils.addAll(pulsarClusterMetadata, stringList.listIterator());
 
         } catch (PulsarAdminException e) {
-            String errMsg = "Fail to create PulsarClient from global configuration: " + e.getMessage();
-            logger.error(errMsg);
-            throw new RuntimeException(errMsg);
+            // this is okay if you are connecting with a token that does not have access to the
+            // system configuration
+            logger.info("Could not get list of Pulsar Clusters from global configuration: " + e.getMessage());
         }
     }
 
@@ -439,7 +456,7 @@ public class PulsarSpace {
                     consumerBuilder = consumerBuilder.consumerName(consumerName);
                 }
 
-                consumer = consumerBuilder.subscribe();
+                Consumer<?> newConsumer = consumerBuilder.subscribe();
 
                 String consumerMetricsPrefix = getPulsarAPIMetricsPrefix(
                     PulsarActivityUtil.PULSAR_API_TYPE.CONSUMER.label,
@@ -448,29 +465,28 @@ public class PulsarSpace {
 
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "total_bytes_recv",
-                    consumerSafeExtractMetric(consumer, (s -> s.getTotalBytesReceived() + s.getNumBytesReceived())));
+                    consumerSafeExtractMetric(newConsumer, (s -> s.getTotalBytesReceived() + s.getNumBytesReceived())));
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "total_msg_recv",
-                    consumerSafeExtractMetric(consumer, (s -> s.getTotalMsgsReceived() + s.getNumMsgsReceived())));
+                    consumerSafeExtractMetric(newConsumer, (s -> s.getTotalMsgsReceived() + s.getNumMsgsReceived())));
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "total_recv_failed",
-                    consumerSafeExtractMetric(consumer, (s -> s.getTotalReceivedFailed() + s.getNumReceiveFailed())));
+                    consumerSafeExtractMetric(newConsumer, (s -> s.getTotalReceivedFailed() + s.getNumReceiveFailed())));
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "total_acks_sent",
-                    consumerSafeExtractMetric(consumer,(s -> s.getTotalAcksSent() + s.getNumAcksSent())));
+                    consumerSafeExtractMetric(newConsumer,(s -> s.getTotalAcksSent() + s.getNumAcksSent())));
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "recv_bytes_rate",
-                    consumerSafeExtractMetric(consumer, ConsumerStats::getRateBytesReceived));
+                    consumerSafeExtractMetric(newConsumer, ConsumerStats::getRateBytesReceived));
                 ActivityMetrics.gauge(activityDef,
                     consumerMetricsPrefix + "recv_msg_rate",
-                    consumerSafeExtractMetric(consumer, ConsumerStats::getRateMsgsReceived));
+                    consumerSafeExtractMetric(newConsumer, ConsumerStats::getRateMsgsReceived));
+                return newConsumer;
             } catch (PulsarClientException ple) {
-                ple.printStackTrace();
+                logger.error("Error creating a consumer", ple);
                 throw new RuntimeException("Unable to create a Pulsar consumer!");
             }
-
-            consumers.put(consumerCacheKey, consumer);
-        }
+        }));
     }
 
     private static Range[] parseRanges(String ranges) {
